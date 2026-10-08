@@ -1,16 +1,22 @@
 import express from 'express';
+import { pool } from './db.js';
 
 const app = express();
 const PORT = 3000;
-
-const books = [{id:1, title: 'Into the Pit', writer: 'William Afton'}, {id: 2, title: 'Casanova', writer: 'Casanovo'}];
 
 app.get('/', (req, res) => {
     res.send('La API está funcionando');
 });
 
-app.get('/api/v1/books', (req, res)=>{
-    res.json(books);
+app.get('/api/v1/books', async (req, res)=>{
+    let rows;
+    try {
+        ({rows} = await pool.query(`SELECT * FROM book`));        
+    } catch (error) {
+        console.error(error);
+    }
+    if (!rows) rows = {"msg": "la respuesta no devolvió ningún registro"};
+    res.json(rows);
 })
 
 app.get('/api/v1/books/:id', (req, res) => {
