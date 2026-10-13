@@ -9,32 +9,42 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/v1/books', async (req, res)=>{
-    let rows;
+    const {writer, year} = req.query;
+    const conditions = [];
+    const values = [];
+
+    if (writer) {
+        values.push(`%${writer}%`);
+        conditions.push(`writer LIKE $${values.length}`);
+    }
+    if (year) {
+        values.push(Number(year));
+        conditions.push(`year = $${values.length}`);
+    }
+
+    const query = 'SELECT * FROM book'
+        + (conditions.length>0 ? ` WHERE ${conditions.join(' AND ')}` : '');
+    
     try {
-        ({rows} = await pool.query(`SELECT * FROM book`));        
+        const {rows} = await pool.query(query, values);
+        res.json(rows);
     } catch (error) {
         console.error(error);
+        res.status(500).json({msg: 'Error al consultar la base de datos'});
     }
-    if (!rows) rows = {"msg": "la respuesta no devolvió ningún registro"};
+
+})
+
+app.get('/api/v1/books/:id', async (req, res) => {
+    let rows;    
+    try {
+        ({rows} = await pool.query(`SELECT * FROM book WHERE id = $1`, [req.params.id]));
+    } catch (error) {
+        console.error(error);
+    } 
+    if (rows == '') rows = {"msg": "No se encontró ningún registro"};
     res.json(rows);
 })
-
-app.get('/api/v1/books/:id', (req, res) => {
-    let book = books.find(b => b.id == req.params.id);
-    if (!book) {
-        res.status(404).json({error: 'Can not find any book with the guiven ID'});
-    }
-    res.json(book);
-})
-
-app.get('/api/v1/books/writer/:writer', (req, res) => {
-    let book = books.find(b => b.writer == req.params.writer);
-    if (!book) {
-        res.status(404).json({error: 'Can not find any book with the guiven writer'});
-    }
-    res.json(book);
-})
-
 
 app.listen(PORT, () => {
     console.log(`El servidor está escuchando en el puerto ${PORT}`);
