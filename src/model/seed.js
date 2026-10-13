@@ -2,7 +2,6 @@ import { pool } from "./db.js";
 
 console.log("DATABASE_URL =", process.env.DATABASE_URL);
 
-
 const books = [
     {title: 'El juego de Ender', writer: 'Orson Scott Card', year: 1982}, 
     {title:'King Sorrow', writer: 'Joe Hill', year:2025}
